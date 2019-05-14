@@ -1,3 +1,5 @@
+#This file is only used for testing. Sometimes if the hardware interface did not clean up properly, we run this file.
+
 import RPi.GPIO as GPIO
 import time
 import threading

@@ -1,3 +1,5 @@
+#The Button class is used to greatly simplify the UI. Simply by providing an up image, down image and a rectangle, you can create a button. This button also supports simple callbacks for press events making for simpler, neater code. 
+
 import pygame
 
 class Button:
