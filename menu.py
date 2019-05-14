@@ -1,3 +1,5 @@
+#Screen that displays the main menu with three buttons
+
 import pygame
 import os
 from button import Button

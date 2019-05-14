@@ -1,3 +1,5 @@
+#Screen that displays the list of songs that can be played
+
 import pygame
 import os
 from button import Button

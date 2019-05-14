@@ -1,3 +1,5 @@
+#Main loop file for controlling GUI and hardware
+
 import sys
  
 import pygame
@@ -9,13 +11,16 @@ from songscreen import SongScreen
 from credscreen import CredScreen
 from controller import clean, is_running
 
+#Enable touchscreen on PiTFT
 os.putenv('SDL_VIDEODRIVER','fbcon')
 os.putenv('SDL_FBDEV','/dev/fb1')
 os.putenv('SDL_MOUSEDRV', 'TSLIB') # Track mouse clicks on piTFT
 os.putenv('SDL_MOUSEDEV', '/dev/input/touchscreen')
- 
+
+#Initialize pygame
 pygame.init()
  
+#Set fps
 fps = 30
 fpsClock = pygame.time.Clock()
  
@@ -64,7 +69,7 @@ screen_lst[3].setBackCallback(back_callback)
 try:
   while is_running():
     screen.fill((0, 0, 0))
-  
+    #Event handling
     for event in pygame.event.get():
       if event.type == QUIT:
         pygame.quit()
@@ -86,7 +91,9 @@ try:
     fpsClock.tick(fps)
 
 except KeyboardInterrupt:
+  pygame.quit()
   clean()
 
+#close out of pygame
 pygame.quit()
 clean()

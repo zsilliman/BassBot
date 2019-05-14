@@ -1,10 +1,14 @@
+#This file controls all the music logic
+
 from controller import compute_transition_time, play_fret, go_to, amp_on, amp_off, release_HW, mrduck, setup_picks
 import threading
 import time
 
+#useful function for modding with no negative output
 def my_mod(a, n):
 	return ((a%n) + n) % n
 
+#Class that contains information about a note (time, fret and string)
 class Note:
 
 	WHOLE       = 0
@@ -36,6 +40,7 @@ class Note:
 			return 0.5*single_beat
 		return 4*single_beat
 
+#A controller that can play a song that is passed to it
 class SongPlayer:
 
 	def __init__(self):
@@ -75,8 +80,6 @@ class SongPlayer:
 			print("TOO FAST FOR STEPPER!")
 			ring_time = 0
 		#Rest if the current sound is less than zero
-		#if (current_note.fret == next_note.fret):
-		#	play_fret(current_note.fret, current_note.string, ring_time, release=False)
 		if (current_note.fret >= 0):
 			print("Playing fret:"+str(current_note.fret)+" String:"+str(current_note.string))
 			play_fret(current_note.fret, current_note.string, ring_time)
@@ -105,7 +108,8 @@ class SongPlayer:
 			go_to(0)
 			setup_picks()
 
-
+#Wrapper class for a song. Basically a collection
+#of notes with a bpm and loop count.
 class Song:
 
 	def __init__(self, notes, bpm):
@@ -113,12 +117,13 @@ class Song:
 		self.bpm = bpm
 		self.loop = 1
 
-
+#Test song
 test = Song([Note(2,0,Note.QUARTER), Note(5,0,Note.QUARTER), Note(7,0,Note.QUARTER),
 		Note(2,0,Note.QUARTER), Note(5,0,Note.QUARTER), Note(8,0,Note.QUARTER), Note(7,0,Note.QUARTER),
 		Note(2,0,Note.QUARTER), Note(5,0,Note.QUARTER), Note(7,0,Note.QUARTER),
 		Note(5,0,Note.QUARTER), Note(2,0,Note.QUARTER)], 30)
 
+#Pachelbel's first section
 section1 = [Note(2,2,Note.QUARTER), Note(2,1,Note.QUARTER), Note(4,1,Note.QUARTER),
 		Note(4,0,Note.QUARTER), Note(0,1,Note.QUARTER), Note(0,0,Note.QUARTER),
 		Note(0,1,Note.QUARTER), Note(2,1,Note.QUARTER)]
@@ -126,7 +131,7 @@ section1 = [Note(2,2,Note.QUARTER), Note(2,1,Note.QUARTER), Note(4,1,Note.QUARTE
 pachelbel = Song(section1, 40)
 pachelbel.loop = 2
 
-
+#Happy birthday by section
 birthday1 = [Note(2,1,Note.EIGHTH), Note(2,1,Note.EIGHTH), Note(4,1,Note.QUARTER), Note(2,1,Note.QUARTER), Note(2,2,Note.QUARTER), Note(6,1,Note.QUARTER)]
 birthday2 = [Note(2,1,Note.EIGHTH), Note(2,1,Note.EIGHTH), Note(4,1,Note.QUARTER), Note(2,1,Note.QUARTER), Note(4,2,Note.QUARTER), Note(2,2,Note.QUARTER)]
 birthday3 = [Note(2,1,Note.EIGHTH), Note(2,1,Note.EIGHTH), Note(2,3,Note.QUARTER), Note(4,2,Note.QUARTER), Note(7,1,Note.QUARTER), Note(6,1,Note.QUARTER), Note(4,1,Note.QUARTER)]
@@ -135,10 +140,13 @@ birthday4 = [Note(0,3,Note.EIGHTH), Note(0,3,Note.EIGHTH), Note(4,2,Note.QUARTER
 birthday = Song(birthday1+birthday2+birthday3+birthday4, 40)
 birthday.loop = 1
 
+#List of available songs
 song_map = [ pachelbel, birthday, test ]
 
+#player to play songs
 song_player = SongPlayer()
 
+#Function used to perform a selected song
 def play_song(song_index):
 	global song_map, song_player
 	song_player.play(song_map[song_index])

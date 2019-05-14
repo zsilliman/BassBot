@@ -1,3 +1,5 @@
+#Screen that displays the fretboard and buttons for each note
+
 import pygame
 import os
 from button import Button
@@ -81,9 +83,9 @@ class PlayScreen:
     def note_callback(self, btn):
         print("note pressed"+str(btn.info))
         print(btn.text_string)
-	amp_on()
+	    amp_on()
         play_fret(btn.info[0], btn.info[1], 1)
-	amp_off()
+	    amp_off()
 
     def slide_left_callback(self, btn):
         print("slide left")

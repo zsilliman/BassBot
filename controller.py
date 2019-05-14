@@ -24,9 +24,11 @@ hw_pi.stop()
 #startup again
 hw_pi = pigpio.pi()
 
+#Set values for clockwise and counterclockwise for stepper
 CW  = 1
 CCW = 0
 
+#Assign GPIO pins to hardware
 DIR = 20
 STEP= 21
 SERV1 = 13
@@ -58,6 +60,7 @@ servo2 = GPIO.PWM(SERV2, 50)
 #fret mappings
 fret_map = [0, 0, 0, 200, 400, 600, 775, 950, 1125, 1275, 1400, 1525, 1670]
 
+#Stepper motor step delay and stepper motor location
 delay = 0.0004
 current_step = 0
 
@@ -73,6 +76,7 @@ print("HARDWARE SETUP COMPLETE")
 #                     DUCK                        #
 #=================================================#
 
+#Mr Duck celebration
 def mrduck():
 	for i in range(0, 8):
 		GPIO.output(DUCK, GPIO.HIGH)
@@ -86,15 +90,19 @@ def mrduck():
 #                      AMP                        #
 #=================================================#
 
+#Turn off the signal to the amplifier
 def amp_off():
   GPIO.output(AMP, GPIO.HIGH)
 
+#Turn on the signal to the amplifier
 def amp_on():
   GPIO.output(AMP, GPIO.LOW)
 
 #=================================================#
 #                    STEPPER                      #
 #=================================================#
+
+#Step forward [steps] steps
 def step_forward(steps):
 	global current_step
 	GPIO.output(DIR, CCW)
@@ -105,6 +113,7 @@ def step_forward(steps):
 		time.sleep(delay)
 		current_step += 1
 
+#Step backward [steps] steps
 def step_backward(steps):
 	global current_step
 	GPIO.output(DIR, CW)
@@ -115,6 +124,8 @@ def step_backward(steps):
 		time.sleep(delay)
 		current_step -= 1
 
+#Abstracted function to go to a desired location,
+#knowing the current location
 def go_to(dest):
 	global current_step
 	#Create 1D vector to new position
@@ -130,29 +141,29 @@ def go_to(dest):
 #             SERVO FRETTING DEVICE               #
 #=================================================#
 
+# NOTE: Freq=Hz and duty=10,000*% (25%=250,000)
+
+#Function to clamp frets using hardware PWM. Also turns off amp
 def push_HW():
-	#hw_pi.hardware_PWM(SERV1, 50, 100000)
-        #hw_pi.hardware_PWM(SERV2, 50, 50000)
-        #time.sleep(1)
 	amp_off()
-	hw_pi.hardware_PWM(SERV1, 50, 50000)  # Freq=Hz and duty=10,000*% (25%=250,000)
+	hw_pi.hardware_PWM(SERV1, 50, 50000)
 	hw_pi.hardware_PWM(SERV2, 50, 100000)
 	time.sleep(push_delay)
 	amp_on()
 
+#Function to release frets using hardware PWM. Also turns off amp
 def release_HW():
-	#hw_pi.hardware_PWM(SERV1, 50, 100000)
-	#hw_pi.hardware_PWM(SERV2, 50, 50000)
-	#time.sleep(1)
 	amp_off()
 	hw_pi.hardware_PWM(SERV1, 50, 110000)
 	hw_pi.hardware_PWM(SERV2, 50, 40000)
 	time.sleep(release_delay)
 	amp_on()
 
+#unused software PWM GPIO controllers
 servo1.start(0)
 servo2.start(0)
 
+#Unused software PWM fretting servo control
 def push():
   global servo1, servo2
   servo1.ChangeFrequency(50) #0.75==>46.5, 1.5==>48.2, 2.25==>44.9
@@ -161,6 +172,7 @@ def push():
   servo2.ChangeDutyCycle(6.2)
   time.sleep(push_delay)
 
+#Unused software PWM fretting servo control
 def release():
   global servo1, servo2
   servo1.ChangeFrequency(50)
@@ -181,7 +193,9 @@ def servo_stop():
 #=================================================#
 #                 PLUCKING SERVOS                 #
 #=================================================#
-	
+
+#class used to control the plucking mechanism.
+#Each instance represents one motor/pick
 class PickController:
 	LEFT = 1
 	UNKNOWN = 0
@@ -209,6 +223,7 @@ class PickController:
 		time.sleep(0.8)
 		self.position = PickController.RIGHT
 
+	#useful method to pluck string in either direction
 	def pluck(self):
 		if self.position == PickController.LEFT:
 			self.pluck_right()
@@ -232,6 +247,7 @@ picks = [pick0, pick1, pick2, pick3]
 #               ABSTRACTED FUNCS                  #
 #=================================================#
 
+#Compute approximate time to perform the action of playing a given note
 def compute_transition_time(fret, string):
 	global current_step
 	dest = fret_map[fret]
@@ -240,6 +256,7 @@ def compute_transition_time(fret, string):
 		return pluck_delay
 	return diff * step_time + pluck_delay + push_delay + release_delay
 
+#Abstracted function to play a given note
 def play_fret(fret, string, ring_time=0, callback=None, release=True):
 	#No need to move stepper or push solenoid for open string
 	if (fret != 0 and release == True):
@@ -254,6 +271,7 @@ def play_fret(fret, string, ring_time=0, callback=None, release=True):
 	if (callback is not None):
 		callback()
 
+#Cleanup all hardware related resources
 def clean():
         release_HW()
 	hw_pi.stop()
@@ -267,10 +285,12 @@ def clean():
 	GPIO.cleanup()
 	print("hardware cleanup done.")
 
+#Unused function to play note in a new thread to prevent GUI freeze
 def play_fret_async(fret, string, ring_time=0, callback=None):
 	my_thread = threading.Thread(target=play_fret, args=(fret, string, ring_time, callback))
 	my_thread.start()
 
+#Method used to reset the locations of the picks to a known position
 def setup_picks():
 	global picks
 	amp_off()
@@ -278,6 +298,7 @@ def setup_picks():
 		pick.pluck()
 	amp_on()
 
+#Useful function for testing and tuning PWM duty cycles for the picks
 def tune_pick(index):
 	global picks
 	while(True):
@@ -291,15 +312,18 @@ def tune_pick(index):
 
 running = True
 
+#Running status function used in other files to help terminate the program
 def is_running():
 	global running
 	return running
 
+#Callback function for quit button
 def quit_button(channel):
 	print("exiting...")
 	global running
 	running = False
 
+#Event listener for quit button
 GPIO.add_event_detect(27, GPIO.FALLING, callback=quit_button, bouncetime = 2000)
 
 #=================================================#
@@ -308,40 +332,3 @@ GPIO.add_event_detect(27, GPIO.FALLING, callback=quit_button, bouncetime = 2000)
 
 
 setup_picks()
-
-#For catching keyboard interrupt
-#try:
-#tune_pick(1)
-#while True:
-#  for pick in picks:
-#    pick.pluck()
-#    pick.pluck()
-  #Infinite loop
-#  while True:
-#    push_HW()
-#    for i in range(0,4):
-#      picks[i].pluck()
-      #play_fret(note_seq[i][0], note_seq[i][1], 1)
-
-      #go_to(fret_map[i])
-      #time.sleep(0.2)
-      #push_HW()
-      #picks[i%4].pluck()
-      #picks[i%4].pluck()
-#      time.sleep(0.5)
-     # release_HW()
-
-#Exceptiono handle for keyboard interrupt
-
-#try:
-#  play_fret()
-#except KeyboardInterrupt:
-#  #Displose/Cleanup resources
-#  hw_pi.stop()
-#  for pick in picks:
-#    pick.stop()
-#  go_to(0)
-#  servo1.stop()
-#  servo2.stop()
-#  servo_stop()
-#  GPIO.cleanup()
